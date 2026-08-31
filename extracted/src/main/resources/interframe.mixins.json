@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.fallingcloud.interframe.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "interframe.refmap.json",
+  "client": [
+    "MixinWindow",
+    "MixinLevelRenderer"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
