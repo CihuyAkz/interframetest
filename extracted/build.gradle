@@ -1,0 +1,76 @@
+plugins {
+    id 'fabric-loom' version '1.9-SNAPSHOT'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
+
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    // Official (Mojang) mappings — same class/method names as the NeoForge build (both are Mojmap), so
+    // the mixins and render-pipeline calls port over unchanged.
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // Sodium 0.8 (Fabric build): Loom remaps published mod jars automatically, so unlike the NeoForge
+    // build we don't need to extract a JiJ'd nested jar to compile against its config API.
+    modCompileOnly "maven.modrinth:sodium:${project.sodium_version}"
+    // Load Sodium on the dev-run classpath so `runClient` behaves like a real install.
+    modLocalRuntime "maven.modrinth:sodium:${project.sodium_version}"
+
+    // --- Optional neural frame-interpolation backend ------------------------------------------------
+    // ONNX Runtime is the engine that runs the RIFE interpolation model. We compile OnnxSynthesizer
+    // against its API but DO NOT bundle it. At runtime the backend only activates if onnxruntime is on
+    // the classpath; otherwise Interframe falls back to the built-in GPU reprojection/blend synthesiser,
+    // which needs no model. See README.
+    compileOnly "com.microsoft.onnxruntime:onnxruntime:${project.onnxruntime_version}"
+}
+
+def targetJavaVersion = 21
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    it.options.release = targetJavaVersion
+}
+
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+    withSourcesJar()
+}
+
+processResources {
+    def props = ["version": project.version]
+    inputs.properties(props)
+    filesMatching("fabric.mod.json") {
+        expand props
+    }
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}

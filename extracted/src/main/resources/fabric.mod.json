@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "interframe",
+  "version": "${version}",
+  "name": "Interframe",
+  "description": "AI frame generation for Minecraft. Captures each finished frame and synthesises in-between frames to raise the perceived frame rate and smooth motion. Layered, graceful-degradation synthesiser: an always-correct cross-blend, a rotational motion-reprojection (\"timewarp\") for the common mouse-look case, and an optional neural RIFE backend (ONNX Runtime) for true learned interpolation. Configure it from Sodium's video settings (also rendered by Reese's Sodium Options). Composes with Sodium, Iris and Foveate. Hand and hotbar/HUD are excluded from the warp so they stay crisp on synthetic frames.",
+  "authors": ["falling_cloud"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/interframe/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.fallingcloud.interframe.Interframe"
+    ],
+    "sodium:config_api_user": [
+      "dev.fallingcloud.interframe.InterframeConfigMenu"
+    ]
+  },
+  "mixins": [
+    "interframe.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.9",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  },
+  "recommends": {
+    "sodium": ">=0.8"
+  },
+  "custom": {
+    "interframe:note": "Not a hard dependency, but capture must run after Foveate's VRS pass composites; if you install Foveate, load Interframe after it (Fabric mod load order can be adjusted with a mod menu / fabric loader dependency override if needed)."
+  }
+}
