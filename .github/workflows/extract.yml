@@ -1,4 +1,4 @@
-name: Extract ZIP
+name: Extract zip
 
 on:
   workflow_dispatch:
