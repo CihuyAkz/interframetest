@@ -15,7 +15,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * is shown.
  *
  * <p>Verified against MC 1.21.1: {@code Window.updateDisplay()} -> {@code RenderSystem.flipFrame(window)}
- * -> {@code GLFW.glfwSwapBuffers}.
+ * -> {@code GLFW.glfwSwapBuffers}. Ported to 1.21.11 without a live compile (see PORTING_NOTES.md) —
+ * {@code updateDisplay} is assumed unchanged (no evidence found that it was renamed/removed through
+ * 1.21.11), but {@code RenderSystem.flipFrame} itself gained a second, nullable
+ * {@code TracyFrameCapturer} parameter somewhere around 1.21.2 (see {@code FrameGenerator}'s call sites,
+ * updated to pass {@code null}). Because this {@code @Inject} targets {@code updateDisplay} by name only
+ * (no descriptor), it will still bind even if Mixin sees a different erased signature than in 1.21.1 —
+ * the risk here is the method being renamed outright, not a parameter/return-type change.
  */
 @Mixin(Window.class)
 public class MixinWindow {

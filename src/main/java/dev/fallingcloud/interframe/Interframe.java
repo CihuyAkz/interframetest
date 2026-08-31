@@ -15,16 +15,18 @@ import org.slf4j.LoggerFactory;
  * The held item, hotbar, crosshair and rest of the HUD are captured separately from the 3D scene and
  * are never warped/blended — see {@link FrameGenerator} and {@code preserveHud}.
  *
- * <p>Built for the same stack as the NeoForge original: MC 1.21.1 with Sodium 0.8 + Iris, here on
- * Fabric Loader. It hooks a different pipeline stage than terrain-shading-rate mods (frame
- * <em>presentation</em>), captures the final composited image downstream of Sodium/Iris, and registers
- * its settings page through Sodium's config API (the {@code sodium:config_api_user} entrypoint on
- * Fabric) so it appears in the video settings menu — including when rendered by Reese's Sodium Options.
- * Configuration lives in {@link InterframeConfig}; the GL work is in {@link FrameGenerator}.
+ * <p>Ported to MC 1.21.11 with Sodium 0.8 + Iris, here on Fabric Loader (originally built against
+ * 1.21.1 — see PORTING_NOTES.md for what changed in the jump between them, notably that
+ * {@code RenderTarget} no longer exposes a raw GL framebuffer id; see {@link dev.fallingcloud.interframe.gl.GpuInterop}).
+ * It hooks a different pipeline stage than terrain-shading-rate mods (frame <em>presentation</em>),
+ * captures the final composited image downstream of Sodium/Iris, and registers its settings page
+ * through Sodium's config API (the {@code sodium:config_api_user} entrypoint on Fabric) so it appears
+ * in the video settings menu — including when rendered by Reese's Sodium Options. Configuration lives
+ * in {@link InterframeConfig}; the GL work is in {@link FrameGenerator}.
  */
 public final class Interframe implements ClientModInitializer {
     public static final String MOD_ID = "interframe";
-    public static final String VERSION = "1.2.0-fabric";
+    public static final String VERSION = "1.3.0-fabric";
     public static final Logger LOGGER = LoggerFactory.getLogger("Interframe");
 
     @Override

@@ -4,6 +4,7 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.fallingcloud.interframe.compat.FoveaBridge;
 import dev.fallingcloud.interframe.gl.GlGuard;
+import dev.fallingcloud.interframe.gl.GpuInterop;
 import dev.fallingcloud.interframe.synth.FrameSynthesizer;
 import dev.fallingcloud.interframe.synth.SynthContext;
 import dev.fallingcloud.interframe.synth.SynthesizerFactory;
@@ -220,7 +221,12 @@ public final class FrameGenerator {
                     // drain unrelated pre-existing errors so the probe below is attributable to the copy
                 }
             }
-            GL30C.glBindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, target.frameBufferId);
+            int mainDepthFbo = GpuInterop.mainDepthFbo(target);
+            if (mainDepthFbo < 0) {
+                depthCopyBroken = true;
+                return;
+            }
+            GL30C.glBindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, mainDepthFbo);
             GL11C.glBindTexture(GL11C.GL_TEXTURE_2D, depthTex);
             GL11C.glCopyTexSubImage2D(GL11C.GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
             if (probe) {
@@ -275,7 +281,12 @@ public final class FrameGenerator {
                     // drain unrelated pre-existing errors so the probe below is attributable to this copy
                 }
             }
-            GL30C.glBindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, target.frameBufferId);
+            int mainColorFbo = GpuInterop.mainColorFbo(target);
+            if (mainColorFbo < 0) {
+                worldColorCopyBroken = true;
+                return;
+            }
+            GL30C.glBindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, mainColorFbo);
             GL11C.glBindTexture(GL11C.GL_TEXTURE_2D, pendingWorldColorTex);
             GL11C.glCopyTexSubImage2D(GL11C.GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
             if (fresh) {
@@ -323,6 +334,15 @@ public final class FrameGenerator {
             return;
         }
 
+        int mainColorFbo = GpuInterop.mainColorFbo(target);
+        if (mainColorFbo < 0) {
+            // Can't read the main render target this frame under whatever 1.21.x API shape is actually
+            // running — skip generation entirely rather than presenting garbage. See GpuInterop /
+            // PORTING_NOTES.md.
+            prevValid = false;
+            return;
+        }
+
         guard.capture();
         try {
             ensureTextures(w, h);
@@ -331,7 +351,7 @@ public final class FrameGenerator {
             // hand + HUD) as before, plus — if this frame's pre-hand/GUI snapshot was captured — the
             // WORLD-only image into the matching ping-pong slot, so both line up under the same idx.
             idx = 1 - idx;
-            blitColor(target.frameBufferId, captureFbo[idx], w, h);
+            blitColor(mainColorFbo, captureFbo[idx], w, h);
             boolean worldSlotValid = worldColorCopied && cfg.preserveHud;
             if (worldSlotValid) {
                 blitColor(pendingWorldFbo, worldCaptureFbo[idx], w, h);
@@ -489,7 +509,7 @@ public final class FrameGenerator {
                 if (!vsync) {
                     waited += waitUntil(t0 + j * slice);
                 }
-                RenderSystem.flipFrame(windowHandle);
+                RenderSystem.flipFrame(windowHandle, null);
             }
             setupForward(curr, (leadFrames + g / (float) (g + 1)) * intervalSec, strength, warpValid, translate);
             drawSynth(w, h);
@@ -509,7 +529,7 @@ public final class FrameGenerator {
             if (!vsync) {
                 waited += waitUntil(t0 + (i - 1) * slice);
             }
-            RenderSystem.flipFrame(windowHandle);
+            RenderSystem.flipFrame(windowHandle, null);
         }
         if (!vsync && g > 0) {
             waited += waitUntil(t0 + g * slice);

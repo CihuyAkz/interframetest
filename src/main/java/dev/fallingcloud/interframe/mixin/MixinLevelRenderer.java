@@ -29,6 +29,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * still world-only — the depth is what the translational (parallax) reprojection needs, and the
  * world-only colour is what lets the synthesiser warp the world without ever touching the hand or HUD
  * (see {@link FrameGenerator#onWorldColor()}).
+ *
+ * <p><b>1.21.11 note</b> (see PORTING_NOTES.md): {@code LevelRenderer.renderLevel}'s parameter list has
+ * changed at least once between 1.21.1 and 1.21.11 (extraction/drawing split, frame-graph rendering).
+ * Both {@code @Inject}s below target it by name only, so they should still bind regardless — but this
+ * was not verified against the real 1.21.11 jar. {@code RenderSystem.getProjectionMatrix()} and
+ * {@code Camera#rotation()} are assumed unchanged (no evidence found otherwise); if compilation fails
+ * here, that's the first place to check.
  */
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer {
