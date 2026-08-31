@@ -1,10 +1,13 @@
-name: Build Mod (Forge)
+name: Build Mod (Fabric 1.21.11)
 
 on:
   push:
-    branches: [Forge]
+    branches: [main]
+    paths:
+      - 'extracted/**'
+      - '.github/workflows/build-fabric.yml'
   pull_request:
-    branches: [Forge]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,16 +18,16 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: extracted   # semua run step otomatis di extracted/
+        working-directory: extracted
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Gradle
@@ -39,7 +42,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: interframe-forge
+          name: interframe-fabric-1.21.11
           path: |
             extracted/build/libs/*.jar
             !extracted/build/libs/*-sources.jar
