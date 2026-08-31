@@ -3,9 +3,6 @@ name: Build Mod (Fabric 1.21.11)
 on:
   push:
     branches: [main]
-    paths:
-      - 'extracted/**'
-      - '.github/workflows/build-fabric.yml'
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -16,9 +13,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: extracted
 
     steps:
       - name: Checkout repository
@@ -44,8 +38,8 @@ jobs:
         with:
           name: interframe-fabric-1.21.11
           path: |
-            extracted/build/libs/*.jar
-            !extracted/build/libs/*-sources.jar
-            !extracted/build/libs/*-dev.jar
-            !extracted/build/libs/*-javadoc.jar
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+            !build/libs/*-dev.jar
+            !build/libs/*-javadoc.jar
           retention-days: 14
