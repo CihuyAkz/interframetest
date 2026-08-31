@@ -489,7 +489,9 @@ public final class FrameGenerator {
         }
 
         float strength = cfg.reprojectStrength();
-        long windowHandle = Minecraft.getInstance().getWindow().getWindow();
+        // 1.21.11: RenderSystem.flipFrame now takes the Window object itself (formerly the raw GLFW
+        // long handle via Window#getWindow(), which was renamed to Window#getHandle()).
+        var window = Minecraft.getInstance().getWindow();
         long frameBase = avgPresentNanos > 0 ? avgPresentNanos : 16_666_667L;
         long slice = vsync ? 0 : Math.min((long) (frameBase * cfg.pacingStrength() / (g + 1)), MAX_WAIT_NANOS);
         long t0 = now;
@@ -509,7 +511,7 @@ public final class FrameGenerator {
                 if (!vsync) {
                     waited += waitUntil(t0 + j * slice);
                 }
-                RenderSystem.flipFrame(windowHandle, null);
+                RenderSystem.flipFrame(window, null);
             }
             setupForward(curr, (leadFrames + g / (float) (g + 1)) * intervalSec, strength, warpValid, translate);
             drawSynth(w, h);
@@ -529,7 +531,7 @@ public final class FrameGenerator {
             if (!vsync) {
                 waited += waitUntil(t0 + (i - 1) * slice);
             }
-            RenderSystem.flipFrame(windowHandle, null);
+            RenderSystem.flipFrame(window, null);
         }
         if (!vsync && g > 0) {
             waited += waitUntil(t0 + g * slice);
@@ -709,8 +711,9 @@ public final class FrameGenerator {
         if (refreshRecheck-- <= 0) {
             refreshRecheck = 120;
             try {
-                long window = Minecraft.getInstance().getWindow().getWindow();
-                long monitor = GLFW.glfwGetWindowMonitor(window);
+                // 1.21.11: Window#getWindow() (raw GLFW handle) was renamed to Window#getHandle().
+                long windowHandle = Minecraft.getInstance().getWindow().getHandle();
+                long monitor = GLFW.glfwGetWindowMonitor(windowHandle);
                 if (monitor == 0) {
                     monitor = GLFW.glfwGetPrimaryMonitor();
                 }

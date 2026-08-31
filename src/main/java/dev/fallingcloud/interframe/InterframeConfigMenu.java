@@ -14,7 +14,7 @@ import net.caffeinemc.mods.sodium.api.config.structure.ModOptionsBuilder;
 import net.caffeinemc.mods.sodium.api.config.structure.OptionGroupBuilder;
 import net.caffeinemc.mods.sodium.api.config.structure.OptionPageBuilder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Adds Interframe's page to Sodium 0.8's video settings — the same menu Reese's Sodium Options re-renders,
@@ -26,16 +26,16 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class InterframeConfigMenu implements ConfigEntryPoint {
 
-    private static final ResourceLocation ENABLED = id("enabled");
-    private static final ResourceLocation MODE = id("mode");
-    private static final ResourceLocation GENERATED = id("generated");
-    private static final ResourceLocation REPROJECT_STRENGTH = id("reproject_strength");
-    private static final ResourceLocation TRANSLATION_WARP = id("translation_warp");
-    private static final ResourceLocation LOOK_AHEAD = id("look_ahead");
-    private static final ResourceLocation MAX_WARP = id("max_warp");
-    private static final ResourceLocation PACING = id("pacing");
-    private static final ResourceLocation IN_GAME_ONLY = id("in_game_only");
-    private static final ResourceLocation PRESERVE_HUD = id("preserve_hud");
+    private static final Identifier ENABLED = id("enabled");
+    private static final Identifier MODE = id("mode");
+    private static final Identifier GENERATED = id("generated");
+    private static final Identifier REPROJECT_STRENGTH = id("reproject_strength");
+    private static final Identifier TRANSLATION_WARP = id("translation_warp");
+    private static final Identifier LOOK_AHEAD = id("look_ahead");
+    private static final Identifier MAX_WARP = id("max_warp");
+    private static final Identifier PACING = id("pacing");
+    private static final Identifier IN_GAME_ONLY = id("in_game_only");
+    private static final Identifier PRESERVE_HUD = id("preserve_hud");
 
     @Override
     public void registerConfigLate(ConfigBuilder builder) {
@@ -44,7 +44,7 @@ public class InterframeConfigMenu implements ConfigEntryPoint {
 
         ModOptionsBuilder mod = builder
                 .registerModOptions(Interframe.MOD_ID, "Interframe", Interframe.VERSION)
-                .setIcon(ResourceLocation.parse("interframe:icon.png"));
+                .setIcon(Identifier.parse("interframe:icon.png"));
 
         OptionGroupBuilder master = builder.createOptionGroup();
         master.addOption(bool(builder, ENABLED, "interframe.option.enabled", save,
@@ -100,7 +100,7 @@ public class InterframeConfigMenu implements ConfigEntryPoint {
         return b;
     }
 
-    private static BooleanOptionBuilder bool(ConfigBuilder builder, ResourceLocation rl, String key,
+    private static BooleanOptionBuilder bool(ConfigBuilder builder, Identifier rl, String key,
                                              StorageEventHandler save,
                                              java.util.function.Consumer<Boolean> setter,
                                              java.util.function.Supplier<Boolean> getter,
@@ -114,7 +114,7 @@ public class InterframeConfigMenu implements ConfigEntryPoint {
         return b;
     }
 
-    private static IntegerOptionBuilder slider(ConfigBuilder builder, ResourceLocation rl, String key,
+    private static IntegerOptionBuilder slider(ConfigBuilder builder, Identifier rl, String key,
                                                StorageEventHandler save,
                                                java.util.function.Consumer<Integer> setter,
                                                java.util.function.Supplier<Integer> getter,
@@ -132,7 +132,7 @@ public class InterframeConfigMenu implements ConfigEntryPoint {
         return b;
     }
 
-    private static ResourceLocation id(String path) {
-        return ResourceLocation.parse(Interframe.MOD_ID + ":" + path);
+    private static Identifier id(String path) {
+        return Identifier.parse(Interframe.MOD_ID + ":" + path);
     }
 }

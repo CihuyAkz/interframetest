@@ -30,12 +30,27 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * world-only colour is what lets the synthesiser warp the world without ever touching the hand or HUD
  * (see {@link FrameGenerator#onWorldColor()}).
  *
- * <p><b>1.21.11 note</b> (see PORTING_NOTES.md): {@code LevelRenderer.renderLevel}'s parameter list has
- * changed at least once between 1.21.1 and 1.21.11 (extraction/drawing split, frame-graph rendering).
- * Both {@code @Inject}s below target it by name only, so they should still bind regardless — but this
- * was not verified against the real 1.21.11 jar. {@code RenderSystem.getProjectionMatrix()} and
- * {@code Camera#rotation()} are assumed unchanged (no evidence found otherwise); if compilation fails
- * here, that's the first place to check.
+ * <p><b>1.21.11 verified against the real Mojang-mapped jar (see build log), not guessed:</b>
+ * <ul>
+ *   <li>{@code Camera#getPosition()} does not exist under official mappings in 1.21.11 — replaced by
+ *       {@code Camera#position()} (confirmed: {@code Camera#rotation()} kept its no-"get" name across the
+ *       same refactor and compiled without error, so {@code position()} follows the same pattern).</li>
+ *   <li>{@code RenderSystem.getProjectionMatrix()} is genuinely gone, not renamed — Mojang moved the live
+ *       projection matrix off the Java heap and into a GPU-side uniform buffer
+ *       ({@code RenderSystem#getProjectionMatrixBuffer()}, a {@code GpuBufferSlice}) as part of the
+ *       submission/rendering-pipeline rewrite that landed across 1.21.6–1.21.9. There is no cheap
+ *       CPU-side matrix to read m00/m11/m22/m32 off of anymore — a correct fix means either reading back
+ *       that GPU buffer (slow, and its exact float layout isn't documented anywhere I could verify) or
+ *       reconstructing the same numbers from {@link Camera#getProjection()} (still CPU-side, gives the
+ *       frustum's half-width/half-height at unit distance for the FOV tangents) plus GameRenderer's
+ *       near/far clip distances for the depth-linearisation terms (m22/m32) — but I could not verify
+ *       Minecraft's exact sign/handedness convention for that reconstruction without the real jar, so
+ *       guessing it risks the same kind of silently-wrong port this file already suffered once.
+ *       <b>{@code RenderSystem.getProjectionMatrix()} below is therefore left as TODO, not fixed.</b></li>
+ * </ul>
+ * {@code LevelRenderer.renderLevel}'s parameter list changed at least once in the same window
+ * (extraction/drawing split); both {@code @Inject}s below still target it by bare name so they should
+ * still bind, but this specific point was not independently re-verified.
  */
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer {
@@ -48,6 +63,10 @@ public class MixinLevelRenderer {
             FrameGenerator.INSTANCE.onWorldCamera(CameraSnapshot.INVALID);
             return;
         }
+        // TODO(1.21.11): RenderSystem.getProjectionMatrix() no longer exists — the projection matrix now
+        // lives in a GPU-side uniform buffer (RenderSystem#getProjectionMatrixBuffer(), a GpuBufferSlice)
+        // rather than as a plain Matrix4f on the Java heap. This line will not compile until that's
+        // resolved; see the class javadoc above for why it wasn't guessed at.
         Matrix4f proj = RenderSystem.getProjectionMatrix();
         float m00 = proj.m00();
         float m11 = proj.m11();
@@ -55,7 +74,7 @@ public class MixinLevelRenderer {
             FrameGenerator.INSTANCE.onWorldCamera(CameraSnapshot.INVALID);
             return;
         }
-        Vec3 p = cam.getPosition();
+        Vec3 p = cam.position();
         // Under a center-priority Fovea frame the live projection is horizontally trimmed, but the image
         // this snapshot is paired with is the PRESENTED one, whose 1:1 center behaves like vanilla's FOV —
         // undo the trim so the rotation warp is exact where the eyes are (see FoveaBridge).
