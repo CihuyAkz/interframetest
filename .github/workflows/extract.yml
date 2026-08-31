@@ -1,4 +1,4 @@
-name: Extract zip
+name: Extract ZIP and Clean Branch
 
 on:
   workflow_dispatch:
@@ -15,16 +15,73 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract ZIP
+        shell: bash
         run: |
+          set -e
+
+          ZIP_FILE=$(find . -type f -name "*.zip" -print -quit)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "Tidak ada file ZIP ditemukan."
+            exit 1
+          fi
+
+          echo "ZIP ditemukan: $ZIP_FILE"
+
+          mkdir -p extracted
+
+          unzip -o "$ZIP_FILE" -d extracted
+
+          echo "Isi hasil ekstraksi:"
+          find extracted -type f
+
+      - name: Clean branch
+        shell: bash
+        run: |
+          set -e
+
+          # Simpan folder workflow sementara
+          mkdir -p /tmp/github-workflows
+          cp -r .github/workflows /tmp/github-workflows/
+
+          # Hapus semua isi repository
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name ".git" \
+            ! -name "extracted" \
+            ! -name ".github" \
+            -exec rm -rf {} +
+
+          # Bersihkan .github selain workflows
+          find .github -mindepth 1 -maxdepth 1 \
+            ! -name "workflows" \
+            -exec rm -rf {} +
+
+          # Hapus hasil ekstraksi lama dari root
+          # lalu pindahkan hasil ekstraksi ke root
+          cp -r extracted/. .
+
+          # Hapus folder sementara
           rm -rf extracted
-          mkdir extracted
-          unzip -o archive.zip -d extracted
 
-      - name: Commit extracted files
+          echo "Repository setelah dibersihkan:"
+          find . -maxdepth 3 -type f \
+            ! -path "./.git/*" \
+            | sort
+
+      - name: Commit and Push
+        shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          set -e
 
-          git add extracted/
-          git commit -m "Extract ZIP" || echo "No changes to commit"
-          git push
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan."
+            exit 0
+          fi
+
+          git commit -m "Extract ZIP and clean branch"
+          git push origin HEAD:main
