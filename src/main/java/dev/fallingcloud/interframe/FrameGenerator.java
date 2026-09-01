@@ -711,8 +711,10 @@ public final class FrameGenerator {
         if (refreshRecheck-- <= 0) {
             refreshRecheck = 120;
             try {
-                // 1.21.11: Window#getWindow() (raw GLFW handle) was renamed to Window#getHandle().
-                long windowHandle = Minecraft.getInstance().getWindow().getHandle();
+                // Window#getWindow() (raw GLFW handle) was NOT renamed in 1.21.11 — confirmed against
+                // Mojang's official mappings (the "getHandle()" name only exists under Yarn's mappings,
+                // which this project does not use). The earlier port guessed wrong here.
+                long windowHandle = Minecraft.getInstance().getWindow().getWindow();
                 long monitor = GLFW.glfwGetWindowMonitor(windowHandle);
                 if (monitor == 0) {
                     monitor = GLFW.glfwGetPrimaryMonitor();

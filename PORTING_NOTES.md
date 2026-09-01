@@ -7,6 +7,26 @@ Mojang's official mapping files, and current Modrinth listings), but **none of i
 against the real game.** Treat this as a well-researched first draft, not a finished port. Run
 `./gradlew build` yourself and work through whatever it flags — the items below are the most likely spots.
 
+## Update: first real `./gradlew build` — 2 compile errors, both fixed
+
+A real build (see attached CI log) surfaced exactly the two spots flagged below as unverified guesses,
+and no others:
+
+- `Window#getHandle()` doesn't exist — the earlier guess that `getWindow()` was renamed to `getHandle()`
+  was wrong. Official Mojang mappings never renamed it; `getHandle()` is only the *Yarn* mapping name.
+  Fixed in `FrameGenerator.java` by reverting to `.getWindow()`.
+- `RenderSystem.getProjectionMatrix()` is indeed gone, as suspected, and there's no public CPU-side
+  read-back of the new GPU-side `RawProjectionMatrix` (its only public member is a write-only `set(...)`).
+  Fixed in `MixinLevelRenderer.java` by rebuilding an equivalent matrix with the public
+  `GameRenderer#getBasicProjectionMatrix(float fovDegrees)`, using the base `Options#fov()` setting for
+  the angle. This is a *reconstruction*, not a read of the exact live value `GameRenderer` uses internally
+  (that computation, `GameRenderer#getFov`, is private) — see the javadoc on `MixinLevelRenderer` for the
+  precise trade-off (FOV tangents can lag ~1 tick during sprint/zoom/nausea transitions only).
+
+Both fixes are backed by Fabric's published yarn mapping docs for 1.21.11 (`GameRenderer` and `Window`
+class listings) rather than guesswork. Everything else in this document reflects the original,
+not-yet-compiled port and is left as-is below.
+
 ## What's confirmed and changed
 
 - **`minecraft_version` → `1.21.11`**, `loom_version` → `1.14-SNAPSHOT` (Fabric's documented recommendation
